@@ -92,6 +92,9 @@ def dashboard():
     for cat, total in category_totals.items():
         category_percentages[cat] = (total / total_amount * 100) if total_amount > 0 else 0
 
+    # Calculate total spend of all categories (same as total_amount)
+    total_spend = sum(category_totals.values())
+
     return render_template(
         'dashboard.html',
         username=current_user.username,
@@ -99,7 +102,8 @@ def dashboard():
         categories=list(category_totals.keys()),
         totals=list(category_totals.values()),
         percentages=[category_percentages[cat] for cat in category_totals.keys()],
-        subcategory_breakdown=subcategory_breakdown
+        subcategory_breakdown=subcategory_breakdown,
+        total_spend=total_spend
     )
 
 

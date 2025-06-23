@@ -24,7 +24,7 @@
     <tbody>
         {% for exp in expenses %}
         <tr>
-            <td>₹{{ exp.amount }}</td>
+            <td>EGP {{ exp.amount }}</td>
             <td>{{ exp.category.name if exp.category else 'Other' }}</td>
             <td>{{ exp.subcategory.name if exp.subcategory else 'Other'}}</td>
             <td>
@@ -53,6 +53,34 @@ const chartLabels = {{ categories|tojson|safe }};
 const chartData = {{ totals|tojson }};
 const chartPercentages = {{ percentages|tojson }};
 const subcategoryBreakdown = {{ subcategory_breakdown|tojson }};
+const totalSpend = {{ total_spend|tojson }};
+
+const pieColors = [
+    'rgba(54, 162, 235, 0.6)',
+    'rgba(255, 99, 132, 0.6)',
+    'rgba(255, 206, 86, 0.6)',
+    'rgba(75, 192, 192, 0.6)',
+    'rgba(153, 102, 255, 0.6)',
+    'rgba(255, 159, 64, 0.6)'
+];
+
+// Plugin to draw total spend in the center
+const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+        const {ctx, chartArea: {width, height}} = chart;
+        ctx.save();
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#222';
+        ctx.fillText('EGP ' + totalSpend.toFixed(2), chart.getDatasetMeta(0).data[0].x, chart.getDatasetMeta(0).data[0].y);
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#666';
+        ctx.fillText('Total Spend', chart.getDatasetMeta(0).data[0].x, chart.getDatasetMeta(0).data[0].y + 22);
+        ctx.restore();
+    }
+};
 
 const expenseChart = new Chart(barCtx, {
     type: 'bar',
@@ -73,17 +101,8 @@ const expenseChart = new Chart(barCtx, {
     }
 });
 
-const pieColors = [
-    'rgba(54, 162, 235, 0.6)',
-    'rgba(255, 99, 132, 0.6)',
-    'rgba(255, 206, 86, 0.6)',
-    'rgba(75, 192, 192, 0.6)',
-    'rgba(153, 102, 255, 0.6)',
-    'rgba(255, 159, 64, 0.6)'
-];
-
 const expensePieChart = new Chart(pieCtx, {
-    type: 'pie',
+    type: 'doughnut', 
     data: {
         labels: chartLabels,
         datasets: [{
@@ -94,6 +113,7 @@ const expensePieChart = new Chart(pieCtx, {
     options: {
         responsive: true,
         plugins: {
+            centerText: true,
             tooltip: {
                 callbacks: {
                     label: function(context) {
@@ -112,7 +132,7 @@ const expensePieChart = new Chart(pieCtx, {
                 let html = '';
                 if (breakdown) {
                     for (const [subcat, total] of Object.entries(breakdown)) {
-                        html += `<li><strong>${subcat}</strong>: ₹${total.toFixed(2)}</li>`;
+                        html += `<li><strong>${subcat}</strong>: EGP${total.toFixed(2)}</li>`;
                     }
                 } else {
                     html = '<li>No subcategories</li>';
@@ -122,7 +142,8 @@ const expensePieChart = new Chart(pieCtx, {
                 document.getElementById('subcategoryModal').style.display = 'flex';
             }
         }
-    }
+    },
+    plugins: [centerTextPlugin]
 });
 </script>
 {% endblock %}
