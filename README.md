@@ -1,4 +1,5 @@
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/c4fcb815-b8c4-4770-bae0-b7ddc0a4cf5a)
+
 
 
 This mini app takes your expenses messages parses it, categorize it and generate a summary for it. 
