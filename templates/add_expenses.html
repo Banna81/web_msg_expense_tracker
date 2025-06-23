@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Expense Message</h2>
+<form method="POST">
+    <textarea name="message" rows="5" class="form-control mb-3" placeholder="Paste your expense message here..." required>{{ request.form.message or '' }}</textarea>
+    <input type="date" name="date" class="form-control mb-3" value="{{ request.form.date or '' }}" required>
+    <button type="submit" class="btn btn-success">Save</button>
+</form>
+{% endblock %}

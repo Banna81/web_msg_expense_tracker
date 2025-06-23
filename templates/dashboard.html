@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Welcome, {{ username }} 👋</h2>
+<a href="{{ url_for('add_expense') }}" class="btn btn-outline-primary mb-3">+ Add Expense Message</a>
+<a href="{{ url_for('list_categories') }}" class="btn btn-outline-secondary mb-3">Manage Categories</a>
+<a href="{{ url_for('logout') }}" class="btn btn-outline-danger mb-3 float-end">Logout</a>
+
+
+
+<canvas id="expenseChart" height="100"></canvas>
+<hr>
+
+<table class="table table-striped mt-4">
+    <thead>
+        <tr>
+            <th>Title</th><th>Amount</th><th>Category</th><th>Date</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exp in expenses %}
+        <tr>
+            <td>{{ exp.title }}</td>
+            <td>₹{{ exp.amount }}</td>
+            <td>{{ exp.category.name if exp.category else 'Other' }}</td>
+            <td>{{ exp.date }}</td>
+            <td>
+                <a href="{{ url_for('edit_expense', id=exp.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{{ url_for('delete_expense', id=exp.id) }}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('expenseChart').getContext('2d');
+const expenseChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ categories|tojson|safe }},
+        datasets: [{
+            label: 'Total by Category',
+            data: {{ totals|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
