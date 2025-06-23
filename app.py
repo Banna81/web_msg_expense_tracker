@@ -69,22 +69,18 @@ def dashboard():
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
     category_totals = {}
     subcategory_breakdown = {}
-
     total_amount = 0
 
     for exp in expenses:
         cat_name = exp.category.name if exp.category else 'Other'
         subcat_name = exp.subcategory.name if exp.subcategory else 'Other'
         amount = exp.amount or 0
-
         # Category totals
         category_totals[cat_name] = category_totals.get(cat_name, 0) + amount
-
         # Subcategory breakdown
         if cat_name not in subcategory_breakdown:
             subcategory_breakdown[cat_name] = {}
         subcategory_breakdown[cat_name][subcat_name] = subcategory_breakdown[cat_name].get(subcat_name, 0) + amount
-
         total_amount += amount
 
     # Calculate percentages
@@ -92,17 +88,43 @@ def dashboard():
     for cat, total in category_totals.items():
         category_percentages[cat] = (total / total_amount * 100) if total_amount > 0 else 0
 
+    # Group categories <5% into 'Other'
+    grouped_totals = {}
+    grouped_percentages = {}
+    grouped_subcats = {}
+    other_total = 0
+    other_subcats = {}
+    for cat, percent in category_percentages.items():
+        if percent < 5 and cat != 'Other':
+            other_total += category_totals[cat]
+            # Merge subcategories
+            for subcat, sub_total in subcategory_breakdown[cat].items():
+                other_subcats[subcat] = other_subcats.get(subcat, 0) + sub_total
+        else:
+            grouped_totals[cat] = category_totals[cat]
+            grouped_percentages[cat] = percent
+            grouped_subcats[cat] = subcategory_breakdown[cat]
+    if other_total > 0:
+        grouped_totals['Other'] = grouped_totals.get('Other', 0) + other_total
+        grouped_percentages['Other'] = (other_total / total_amount * 100) if total_amount > 0 else 0
+        # Merge with any existing 'Other' subcats
+        if 'Other' in grouped_subcats:
+            for subcat, sub_total in other_subcats.items():
+                grouped_subcats['Other'][subcat] = grouped_subcats['Other'].get(subcat, 0) + sub_total
+        else:
+            grouped_subcats['Other'] = other_subcats
+
     # Calculate total spend of all categories (same as total_amount)
-    total_spend = sum(category_totals.values())
+    total_spend = sum(grouped_totals.values())
 
     return render_template(
         'dashboard.html',
         username=current_user.username,
         expenses=expenses,
-        categories=list(category_totals.keys()),
-        totals=list(category_totals.values()),
-        percentages=[category_percentages[cat] for cat in category_totals.keys()],
-        subcategory_breakdown=subcategory_breakdown,
+        categories=list(grouped_totals.keys()),
+        totals=list(grouped_totals.values()),
+        percentages=[grouped_percentages[cat] for cat in grouped_totals.keys()],
+        subcategory_breakdown=grouped_subcats,
         total_spend=total_spend
     )
 
