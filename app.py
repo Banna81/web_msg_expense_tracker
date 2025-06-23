@@ -68,20 +68,29 @@ def login():
 def dashboard():
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
     category_totals = {}
+    subcategory_breakdown = {}
+
+    total_amount = 0
 
     for exp in expenses:
-        cat_name = exp.category.name if exp.category else 'Uncategorized'
-        category_totals[cat_name] = category_totals.get(cat_name, 0) + (exp.amount or 0)
+        cat_name = exp.category.name if exp.category else 'Other'
+        subcat_name = exp.subcategory.name if exp.subcategory else 'Other'
+        amount = exp.amount or 0
 
-    suggestions = []
-    if category_totals:
-        max_cat = max(category_totals, key=category_totals.get)
-        max_amt = category_totals[max_cat]
+        # Category totals
+        category_totals[cat_name] = category_totals.get(cat_name, 0) + amount
 
-        if max_amt > 3000:
-            suggestions.append(f"You spent ${max_amt} on {max_cat}. Consider reducing it.")
-        else:
-            suggestions.append('Your spending is within healthy limits.')
+        # Subcategory breakdown
+        if cat_name not in subcategory_breakdown:
+            subcategory_breakdown[cat_name] = {}
+        subcategory_breakdown[cat_name][subcat_name] = subcategory_breakdown[cat_name].get(subcat_name, 0) + amount
+
+        total_amount += amount
+
+    # Calculate percentages
+    category_percentages = {}
+    for cat, total in category_totals.items():
+        category_percentages[cat] = (total / total_amount * 100) if total_amount > 0 else 0
 
     return render_template(
         'dashboard.html',
@@ -89,7 +98,8 @@ def dashboard():
         expenses=expenses,
         categories=list(category_totals.keys()),
         totals=list(category_totals.values()),
-        suggestions=suggestions
+        percentages=[category_percentages[cat] for cat in category_totals.keys()],
+        subcategory_breakdown=subcategory_breakdown
     )
 
 
