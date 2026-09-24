@@ -1,0 +1,15 @@
+# Python cache files, regenerated automatically
+__pycache__/
+*.pyc
+
+# Local databases, never commit real data
+*.db
+instance/
+
+# Secrets and local environments
+.env
+venv/
+.venv/
+
+# Mac system files
+.DS_Store

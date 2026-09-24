@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import os
 import re
 from models import db, User, Expense, Category, SubCategory  # Assuming models.py contains the User model and db instance
 from flask_migrate import Migrate  # Add this import
@@ -13,12 +14,17 @@ url_for: Generates a URL for a given function name (route), making it easy to re
 flash: Stores a message that can be retrieved and displayed to the user on the next request, commonly used for notifications.
 """
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+# Read the secret from the server's environment; the fallback is for local development only
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-only-not-secret')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Add this line after db.init_app(app)
+
+# Create tables at import time so they also exist when a server like gunicorn runs the app
+with app.app_context():
+    db.create_all()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -332,11 +338,9 @@ def delete_category(id):
     category = Category.query.get_or_404(id)
     db.session.delete(category)
     db.session.commit()
-    flash('Category deleted!', 'success')
+    flash('Category has been successfully deleted!', 'success')
     return redirect(url_for('list_categories'))
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Create database tables if they don't exist
     app.run(debug=True)
